@@ -640,12 +640,24 @@ def _build_http_app(auth_token: str):
                 return PlainTextResponse("ok")
             if path == "/":
                 return PlainTextResponse(
-                    "pipedrive-yvy MCP — POST /mcp com header Authorization: Bearer <token>"
+                    "pipedrive-yvy MCP — POST /mcp com Authorization: Bearer <token> "
+                    "(ou ?api_token=<token> na query string)"
                 )
+            # Accept token via Authorization header OR ?api_token= query param.
+            # Query param fallback exists para clients (ex: claude.ai) que só falam
+            # OAuth e não passam bearer estático — colocar o token na URL faz com que
+            # o /mcp responda 200 direto, sem o cliente tentar descobrir OAuth.
+            provided: str | None = None
             header = request.headers.get("Authorization", "")
-            if not header.startswith("Bearer "):
+            if header.startswith("Bearer "):
+                provided = header[7:]
+            else:
+                qp = request.query_params.get("api_token")
+                if qp:
+                    provided = qp
+            if not provided:
                 return JSONResponse({"error": "missing bearer token"}, status_code=401)
-            if not hmac.compare_digest(header[7:], auth_token):
+            if not hmac.compare_digest(provided, auth_token):
                 return JSONResponse({"error": "invalid bearer token"}, status_code=401)
             return await call_next(request)
 
