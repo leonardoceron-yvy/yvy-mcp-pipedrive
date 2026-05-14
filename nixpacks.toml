@@ -1,0 +1,9 @@
+# Força Python 3.12 (FastMCP + PEP 604 unions exigem 3.10+)
+[phases.setup]
+nixPkgs = ["python312", "gcc"]
+
+[phases.install]
+cmds = ["python -m venv /opt/venv && /opt/venv/bin/pip install --upgrade pip && /opt/venv/bin/pip install -e ."]
+
+[start]
+cmd = "/opt/venv/bin/python server.py"
