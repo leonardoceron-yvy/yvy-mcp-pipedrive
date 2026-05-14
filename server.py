@@ -14,6 +14,7 @@ from typing import Any, Literal
 import httpx
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 load_dotenv()
 
@@ -42,7 +43,12 @@ PROTECTED_FIELD_KEYS = {
 BACKUPS_DIR = Path(__file__).parent / "backups"
 BACKUPS_DIR.mkdir(exist_ok=True)
 
-mcp = FastMCP("pipedrive-yvy")
+# DNS-rebinding protection desligada porque já temos bearer auth gateando /mcp.
+# Senão o FastMCP rejeita Host headers que não sejam localhost com 421 "Invalid Host header".
+mcp = FastMCP(
+    "pipedrive-yvy",
+    transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
+)
 
 
 # ===== HTTP =====
